@@ -62,15 +62,15 @@ SHL void slack(void){
 				vga_plot_unsafe(bb,(SCR_W/2.0)+u*sw,(SCR_H/2.0)+v*sh,c);
 			}
 		}
-		//t+=.0025;
-		t+=.025;
+		t+=.0025;
+		//t+=.025;
 		//n=t/2;
-		//in=200;
-		in=6;
+		in=200;
+		//in=6;
 		jn=200;
 		showpal();
 		vga_drawstr(bb,buf,0,SCR_H-8,7);
-		//vsync();
+		vsync();
 		vga_swap(&bb);
 		++frame;
 		uticks=timer_elapsed();

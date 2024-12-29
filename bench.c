@@ -101,7 +101,7 @@ SHL void bench_plot_x(char** log){
 	bench_end(log);
 }
 
-SHL void bench_plot_y(char** log){
+static void bench_plot_y(char** log){
 	bench_start(log,"plot y");
 	while(1){
 		for(int x=-16;x<SCR_W+16;++x){ 
@@ -109,6 +109,117 @@ SHL void bench_plot_y(char** log){
 			for(int y=-16;y<SCR_H+16;++y){
 				vga_plot(vga_fb.px,x,y,c++);
 			}
+		}
+		if(frame_end()) break;
+	}
+	bench_end(log);
+}
+
+static void bench_line(char** log){
+	void VectorsUp(int16_t x,int16_t y,int16_t w,int16_t h,uint8_t c){
+		int wx=x-w;
+		int wy=y-h;
+		for(;wx<(x+w);++wx)
+			vga_line(&vga_fb,x,y,wx,wy,c++);
+		wx=x+w-1;
+		wy=y-h;
+		for(;wy<(y+h);++wy)
+			vga_line(&vga_fb,x,y,wx,wy,c++);
+		wx=x+w-1;
+		wy=y+h-1;
+		for(;wx>=(x-w);--wx)
+			vga_line(&vga_fb,x,y,wx,wy,c++);
+		wx=x-w;
+		wy=y+h-1;
+		for(;wy>=(y-h);--wy)
+			vga_line(&vga_fb,x,y,wx,wy,c++);
+	}
+
+	bench_start(log,"line");
+	while(1){
+		VectorsUp(SCR_W/2,SCR_H/2,SCR_W/2,SCR_H/2,frame);
+		if(frame_end()) break;
+	}
+	bench_end(log);
+}
+
+static void bench_line_fast(char** log){
+	void VectorsUp(int16_t x,int16_t y,int16_t w,int16_t h,uint8_t c){
+		int wx=x-w;
+		int wy=y-h;
+		for(;wx<(x+w);++wx)
+			vga_line_fast(&vga_fb,x,y,wx,wy,c++);
+		wx=x+w-1;
+		wy=y-h;
+		for(;wy<(y+h);++wy)
+			vga_line_fast(&vga_fb,x,y,wx,wy,c++);
+		wx=x+w-1;
+		wy=y+h-1;
+		for(;wx>=(x-w);--wx)
+			vga_line_fast(&vga_fb,x,y,wx,wy,c++);
+		wx=x-w;
+		wy=y+h-1;
+		for(;wy>=(y-h);--wy)
+			vga_line_fast(&vga_fb,x,y,wx,wy,c++);
+	}
+
+	bench_start(log,"line_fast");
+	while(1){
+		VectorsUp(SCR_W/2,SCR_H/2,SCR_W/2,SCR_H/2,frame);
+		if(frame_end()) break;
+	}
+	bench_end(log);
+}
+
+static void bench_line_h(char** log){
+	bench_start(log,"line_h");
+	while(1){
+		int8_t c=frame;
+		for(int y=0;y<vga_fb.h;++y){
+			vga_line_fast(&vga_fb,0,y,vga_fb.w,y,c++);}
+		if(frame_end()) break;
+	}
+	bench_end(log);
+}
+
+static void bench_line_v(char** log){
+	bench_start(log,"line_v");
+	while(1){
+		int8_t c=frame;
+		for(int x=0;x<vga_fb.w;++x){
+			vga_line_fast(&vga_fb,x,0,x,vga_fb.h,c++);}
+		if(frame_end()) break;
+	}
+	bench_end(log);
+}
+
+static void bench_line_45(char** log){
+	bench_start(log,"line_45_1");
+	int w=vga_fb.w-1;
+	int h=vga_fb.h-1;
+	while(1){
+		int8_t c=frame;
+		for(int i=0;i<=min(w,h);++i){
+			vga_line_fast(&vga_fb,0,h-i,i,h,c++);
+			vga_line_fast(&vga_fb,w,i,w-i,0,c++);
+		}
+		for(int i=1;i<=(w-h)/2;++i){
+			vga_line_fast(&vga_fb,i,0,i+h,h,c++);
+			vga_line_fast(&vga_fb,w-i,h,w-i-h,0,c++);
+		}
+		if(frame_end()) break;
+	}
+	bench_end(log);
+	bench_start(log,"line_45_2");
+	while(1){
+		int8_t c=frame;
+		for(int i=0;i<=min(w,h);++i){
+			vga_line_fast(&vga_fb,0,i,i,0,c++);
+			vga_line_fast(&vga_fb,w,h-i,w-i,h,c++);
+		}
+		for(int i=1;i<=(w-h)/2;++i){
+			vga_line_fast(&vga_fb,i,h,i+h,0,c++);
+			vga_line_fast(&vga_fb,w-i,0,w-i-h,h,c++);
 		}
 		if(frame_end()) break;
 	}
@@ -196,6 +307,13 @@ SHL void benchmark(char** log){
 	bench_cls(log);
 	bench_plot_x(log);
 	bench_plot_y(log);
+	*log=my_strcpy(*log,"\n");
+	bench_line_h(log);
+	bench_line_v(log);
+	bench_line_45(log);
+	bench_line(log);
+	bench_line_fast(log);
+	*log=my_strcpy(*log,"\n");
 	bench_rect_vr(log);
 }
 

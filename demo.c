@@ -117,7 +117,7 @@ static void screen_start(void){
 }
 
 static void frame_end(void* bb){
-	//if(fps>5800) vsync();
+	if(fps>5800) vsync();
 	if(bb) vga_swap(bb);
 	++frame;
 	fps=(UCLOCKS_PER_SEC*100)/(timer_elapsed()/frame);
@@ -143,7 +143,7 @@ static void dist(void){
 		y1+=10;
 	}
 }
-
+// 486DX33 52.93fps
 static void derp(void){
 	if((vga_fb.w!=320)&&(vga_fb.h!=200)) return;
 	const int w=320;
@@ -214,6 +214,7 @@ static void shadebobs(void){
 	}
 }
 
+// 486DX33 23.77 fps
 static void roto(void){
 	uint8_t tex_fetch(fp_t u,fp_t v){
 		return fp_to_int16(u)^fp_to_int16(v);
@@ -224,7 +225,7 @@ static void roto(void){
 		double sin_t;
 		double cos_t;
 		sincos(t,&sin_t,&cos_t);
-		float scale=t*t*0.01;
+		float scale=t*t*0.1;
 		fp_t fsin_t=float_to_fp(sin_t*scale);
 		fp_t fcos_t=float_to_fp(cos_t*scale);
 		fp_t xo=float_to_fp(-SCR_W/2+sin_t*SCR_W/2);
@@ -273,6 +274,7 @@ static void load_pal_seg(void){
 	}
 }
 
+// 486DX33 15.09fps
 static void roto_pb(void){
 	uint8_t tex_fetch(fp_t u,fp_t v){
 		uint8_t c=vga_getpx_unsafe(&seg_pb,fp_to_int(u>>1)&0x1f,fp_to_int(v>>1)&0x1f);
@@ -291,7 +293,7 @@ static void roto_pb(void){
 		double sin_t;
 		double cos_t;
 		sincos(t,&sin_t,&cos_t);
-		float scale=-t*0.01;
+		float scale=-t*0.1;
 		fp_t fsin_t=float_to_fp(sin_t*scale);
 		fp_t fcos_t=float_to_fp(cos_t*scale);
 		fp_t xo=float_to_fp(-SCR_W/2+sin_t*SCR_W/2);
@@ -344,6 +346,7 @@ static void roto_pb(void){
 	}
 }
 
+// 486DX33 32.72fps
 static void tunnel(void){
 	uint8_t tun[2][SCR_W][SCR_H];
 	for(int y=0;y<SCR_H;++y){
@@ -400,6 +403,7 @@ static void tunnel(void){
 	}
 }
 
+// 486DX33 37.43fps
 static void plane(void){
 	uint8_t tex_fetch(fp_t u,int v){
 		return fp_to_int16(u)^v;
@@ -440,6 +444,7 @@ static void plane(void){
 	}
 }
 
+// 486DX33 19.12fps
 static void plane_pb(void){
 	uint8_t tex_fetch(fp_t u,int v){
 		uint8_t c=vga_getpx_unsafe(&seg_pb,fp_to_int(u<<1)&0x1f,(v)&0x1f);
@@ -487,18 +492,51 @@ static void plane_pb(void){
 	}
 }
 
+static void VectorsUp(
+	int16_t x,
+	int16_t y,
+	int16_t w,
+	int16_t h,
+	uint8_t c)
+{
+	int wx=x-w;
+	int wy=y-h;
+	for(;wx<(x+w);++wx)
+		vga_line_fast(&vga_fb,x,y,wx,wy,c++);
+	wx=x+w-1;
+	wy=y-h;
+	for(;wy<(y+h);++wy)
+		vga_line_fast(&vga_fb,x,y,wx,wy,c++);
+	wx=x+w-1;
+	wy=y+h-1;
+	for(;wx>=(x-w);--wx)
+		vga_line_fast(&vga_fb,x,y,wx,wy,c++);
+	wx=x-w;
+	wy=y+h-1;
+	for(;wy>=(y-h);--wy)
+		vga_line_fast(&vga_fb,x,y,wx,wy,c++);
+}
+
 static void lines(void){
 	//vga_pal_set(0,0,0,0);
 	//vga_pal_set(1,-1,-1,-1);
 	screen_start();
 	while(!key_hit()){
-		vga_cls(&vga_fb,0);
-		VRECT r;
-		r.x1=0;
-		r.y1=0;
-		r.x2=SCR_W-1;
-		r.y2=SCR_H-1;
-		vga_line(&vga_fb,&r,128);
+		//vga_cls(&vga_fb,0);
+		//VRECT r;
+		//r.x1=0;
+		//r.y1=0;
+		//r.x2=SCR_W-1;
+		//r.y2=SCR_H-1;
+		//vga_line(&vga_fb,&r,1);
+
+		VectorsUp(SCR_W/2,SCR_H/2,SCR_W/2,SCR_H/2,frame);
+
+		//VectorsUp(SCR_W/4  ,SCR_H/4,  SCR_W/4,SCR_H/4,frame);
+		//VectorsUp(SCR_W*3/4,SCR_H/4,  SCR_W/4,SCR_H/4,frame);
+		//VectorsUp(SCR_W/4,  SCR_H*3/4,SCR_W/4,SCR_H/4,frame);
+		//VectorsUp(SCR_W*3/4,SCR_H*3/4,SCR_W/4,SCR_H/4,frame);
+
 		vga_drawstr(vga_fb.px,buf,0,SCR_H-8,128);
 		//showpal();
 		frame_end(NULL);
@@ -561,6 +599,9 @@ static void do_demo(void){
 	//gray();
 	//galaxy();
 
+	lines();
+	return;
+
 	derp();
 	//return;
 	plasma();
@@ -570,7 +611,6 @@ static void do_demo(void){
 	roto_pb();
 	plane();
 	plane_pb();
-	//lines();
 	tunnel();
 	//dist();
 }

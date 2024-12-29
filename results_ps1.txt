@@ -1,0 +1,15 @@
+cls 329 frames in 5.01 sec 65.62 fps
+plot x 116 frames in 5.03 sec 23.02 fps
+plot y 96 frames in 5.00 sec 19.17 fps
+
+line_h 311 frames in 5.01 sec 62.03 fps
+line_v 140 frames in 5.01 sec 27.92 fps
+line_45_1 137 frames in 5.02 sec 27.27 fps
+line_45_2 137 frames in 5.02 sec 27.26 fps
+line 24 frames in 5.00 sec 4.79 fps
+line_fast 48 frames in 5.08 sec 9.44 fps
+
+rect vr 1376 rects in 5.85 sec 234.98 rects/sec
+Benchmarking backbuffer...
+plot y bb 131 frames in 5.025328 sec 26.067949 fps
+drawchar 183 frames in 5.007493 sec 36.545230 fps
