@@ -37,20 +37,20 @@ SHL void showpal(void){
 
 SHL void gray(void){
 	for(int i=0;i<256;++i){
-		vga_pal_set(i,i>>2,i>>2,i>>2);
+		vga_pal_set(i,i,i,i);
 	}
 }
 
-SHL void rainbow1(void){
-	for(int i=0;i<256;++i){
+SHL void rainbow(int n){
+	for(int i=0;i<n;++i){
 		uint16_t r,g,b;
-		HSVtoRGB16(&r,&g,&b,i*(0xffff/256),0xFFFF,0xFFFF);
-		vga_pal_set(i+16,r>>10,g>>10,b>>10);
+		HSVtoRGB16(&r,&g,&b,i*(0xffff/n),0xFFFF,0xFFFF);
+		vga_pal_set(256-n+i,r>>10,g>>10,b>>10);
 	}
 	//vga_pal_set(255,0xff,0xff,0xff);
 }
 
-SHL void rainbow(void){
+SHL void rainbow16(void){
 	for(int i=0;i<256-16;++i){
 		int x=i&0xf;
 		int y=i>>4;
@@ -214,11 +214,12 @@ static void shadebobs(void){
 	}
 }
 
-// 486DX33 23.77 fps
+// 486DX33 25.88 fps
 static void roto(void){
 	uint8_t tex_fetch(fp_t u,fp_t v){
 		return fp_to_int16(u)^fp_to_int16(v);
 	}
+	rainbow(256);
 	screen_start();
 	while(!key_hit()){
 		float t=timer_elapsed_fsec();
@@ -230,10 +231,10 @@ static void roto(void){
 		fp_t fcos_t=float_to_fp(cos_t*scale);
 		fp_t xo=float_to_fp(-SCR_W/2+sin_t*SCR_W/2);
 		fp_t yo=float_to_fp(-SCR_H/2+cos_t*SCR_H/2);
-		for(int y=0;y<SCR_H;++y){
-			fp_t y1=int_to_fp(y)+yo;
-			fp_t u=fp_mul(fcos_t,xo)-fp_mul(fsin_t,y1);
-			fp_t v=fp_mul(fsin_t,xo)+fp_mul(fcos_t,y1);
+		for(int py=0;py<SCR_H;++py){
+			fp_t y=fp_mul(float_to_fp(1.2),int_to_fp(py)+yo);
+			fp_t u=fp_mul(fcos_t,xo)-fp_mul(fsin_t,y);
+			fp_t v=fp_mul(fsin_t,xo)+fp_mul(fcos_t,y);
 #if 0
 			for(int x=0;x<SCR_W;++x){
 				vga_plot_unsafe(vga_fb.px,x,y,fp_to_int16(u)^fp_to_int16(v));
@@ -241,7 +242,7 @@ static void roto(void){
 				v+=fsin_t;
 			}
 #else
-			for(int x=0;x<SCR_W;x+=4){
+			for(int px=0;px<SCR_W;px+=4){
 				uint8_t a=tex_fetch(u,v);
 				u+=fcos_t;
 				v+=fsin_t;
@@ -255,7 +256,7 @@ static void roto(void){
 				u+=fcos_t;
 				v+=fsin_t;
 				uint32_t l=(a)|(b<<8)|(c<<16)|(d<<24);
-				*(uint32_t*)&vga_fb.px[SCR_W*y+x]=l;
+				*(uint32_t*)&vga_fb.px[SCR_W*py+px]=l;
 			}
 #endif
 		}
@@ -272,20 +273,19 @@ static void load_pal_seg(void){
 		uint8_t b=seg_pal[i][2]>>2;
 		vga_pal_set(i,r,g,b);
 	}
+	vga_pal_set(0,0,0,0);
+	//vga_pal_set(1,-1,-1,-1);
 }
 
 // 486DX33 15.09fps
 static void roto_pb(void){
 	uint8_t tex_fetch(fp_t u,fp_t v){
 		uint8_t c=vga_getpx_unsafe(&seg_pb,fp_to_int(u>>1)&0x1f,fp_to_int(v>>1)&0x1f);
-#if 1
-		if(!c){
-			c=fp_to_int16(u)^fp_to_int16(v);
-		}
-#endif
+		if(!c) c=((fp_to_int16(u>>1)^fp_to_int16(v>>1))&0x7F)+128;
 		return c;
 	}
-	rainbow1();
+	gray();
+	rainbow(128);
 	load_pal_seg();
 	screen_start();
 	while(!key_hit()){
@@ -300,17 +300,10 @@ static void roto_pb(void){
 		fp_t yo=float_to_fp(-SCR_H/2+cos_t*SCR_H/2);
 		fp_t uo=int_to_fp(32)-fp_mul(fcos_t,xo);
 		fp_t vo=int_to_fp(32)-fp_mul(fsin_t,xo);
-		for(int y=0;y<SCR_H;++y){
-#if 1
-			fp_t y1=yo+int_to_fp(y);
-			fp_t u=uo-fp_mul(fsin_t,y1);
-			fp_t v=vo+fp_mul(fcos_t,y1);
-#else
-			fp_t u=uo;
-			fp_t v=vo;
-			uo-=fsin_t;
-			vo+=fcos_t;
-#endif
+		for(int py=0;py<SCR_H;++py){
+			fp_t y=fp_mul(float_to_fp(1.2),yo+int_to_fp(py));
+			fp_t u=uo-fp_mul(fsin_t,y);
+			fp_t v=vo+fp_mul(fcos_t,y);
 #if 0
 			for(int x=0;x<SCR_W;++x){
 				uint8_t c=tex_fetch(u,v);
@@ -319,7 +312,7 @@ static void roto_pb(void){
 				v+=fsin_t;
 			}
 #else
-			for(int x=0;x<SCR_W;x+=4){
+			for(int px=0;px<SCR_W;px+=4){
 				uint8_t a=tex_fetch(u,v);
 				u+=fcos_t;
 				v+=fsin_t;
@@ -336,7 +329,7 @@ static void roto_pb(void){
 				u+=fcos_t;
 				v+=fsin_t;
 				l|=d<<24;
-				*(uint32_t*)&vga_fb.px[SCR_W*y+x]=l;
+				*(uint32_t*)&vga_fb.px[SCR_W*py+px]=l;
 			}
 #endif
 		}
@@ -361,7 +354,7 @@ static void tunnel(void){
 		}
 	}
 
-	rainbow1();
+	rainbow(256);
 
 	screen_start();
 	while(!key_hit()){
@@ -409,7 +402,7 @@ static void plane(void){
 	uint8_t tex_fetch(fp_t u,int v){
 		return fp_to_int16(u)^v;
 	}
-	rainbow1();
+	rainbow(256);
 	//vga_pal_set(0,0,0,0);
 	//vga_pal_set(1,-1,-1,-1);
 	screen_start();
@@ -446,21 +439,16 @@ static void plane(void){
 	}
 }
 
-// 486DX33 19.12fps
+// 486DX33 20.27fps
 static void plane_pb(void){
 	uint8_t tex_fetch(fp_t u,int v){
 		uint8_t c=vga_getpx_unsafe(&seg_pb,fp_to_int(u<<1)&0x1f,(v)&0x1f);
-#if 1
-		if(!c){
-			c=fp_to_int16(u)^v;
-		}
-#endif
+		if(!c) c=((fp_to_int16(u)^v)&0x7F)+128;
 		return c;
 	}
-	rainbow1();
+	gray();
+	rainbow(128);
 	load_pal_seg();
-	//vga_pal_set(0,0,0,0);
-	//vga_pal_set(1,-1,-1,-1);
 	screen_start();
 	while(!key_hit()){
 		int tt=timer_elapsed()/(UCLOCKS_PER_SEC/36);
@@ -556,7 +544,7 @@ static float osc_sin(float freq){
 }
 
 static void plasma1(void){
-	rainbow1();
+	rainbow(256);
 	screen_start();
 	while(!key_hit()){
 		float t=timer_elapsed_fsec();
@@ -610,7 +598,7 @@ static void plasma1(void){
 }
 
 static void plasma(void){
-	rainbow1();
+	rainbow(256);
 	screen_start();
 	fp_t t=0;
 	while(!key_hit()){
@@ -660,8 +648,7 @@ static void plasma(void){
 }
 
 static void do_demo(void){
-	//rainbow();
-	rainbow1();
+	rainbow(256);
 	//gray();
 	//galaxy();
 
@@ -672,7 +659,6 @@ static void do_demo(void){
 	plasma1(); //return;
 
 	shadebobs();
-	rainbow1();
 	roto();
 	roto_pb();
 	plane();
