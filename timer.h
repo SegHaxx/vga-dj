@@ -11,7 +11,7 @@ SHL uclock_t timer_elapsed(void){
 }
 
 SHL float timer_to_fsec(uclock_t t){
-	return (float)t/(float)UCLOCKS_PER_SEC;
+	return (double)t*(1.0/(double)UCLOCKS_PER_SEC);
 }
 
 SHL float timer_elapsed_fsec(void){
