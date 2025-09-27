@@ -493,31 +493,35 @@ static void plane_pb(void){
 }
 
 static void VectorsUp(
+	DRAW_CONTEXT* dc,
 	int16_t x,
 	int16_t y,
 	int16_t w,
-	int16_t h,
-	uint8_t c)
+	int16_t h)
 {
 	int wx=x-w;
 	int wy=y-h;
-	for(;wx<(x+w);++wx)
-		vga_line_fast(&vga_fb,x,y,wx,wy,c++);
+	for(;wx<(x+w);++wx){
+		vga_line_fast(dc,x,y,wx,wy);++dc->c;}
 	wx=x+w-1;
 	wy=y-h;
-	for(;wy<(y+h);++wy)
-		vga_line_fast(&vga_fb,x,y,wx,wy,c++);
+	for(;wy<(y+h);++wy){
+		vga_line_fast(dc,x,y,wx,wy);++dc->c;}
 	wx=x+w-1;
 	wy=y+h-1;
-	for(;wx>=(x-w);--wx)
-		vga_line_fast(&vga_fb,x,y,wx,wy,c++);
+	for(;wx>=(x-w);--wx){
+		vga_line_fast(dc,x,y,wx,wy);++dc->c;}
 	wx=x-w;
 	wy=y+h-1;
-	for(;wy>=(y-h);--wy)
-		vga_line_fast(&vga_fb,x,y,wx,wy,c++);
+	for(;wy>=(y-h);--wy){
+		vga_line_fast(dc,x,y,wx,wy);++dc->c;}
 }
 
 static void lines(void){
+	DRAW_CONTEXT dc={
+		.pxb=&vga_fb
+	};
+
 	//vga_pal_set(0,0,0,0);
 	//vga_pal_set(1,-1,-1,-1);
 	screen_start();
@@ -530,7 +534,8 @@ static void lines(void){
 		//r.y2=SCR_H-1;
 		//vga_line(&vga_fb,&r,1);
 
-		VectorsUp(SCR_W/2,SCR_H/2,SCR_W/2,SCR_H/2,frame);
+		dc.c=frame;
+		VectorsUp(&dc,SCR_W/2,SCR_H/2,SCR_W/2,SCR_H/2);
 
 		//VectorsUp(SCR_W/4  ,SCR_H/4,  SCR_W/4,SCR_H/4,frame);
 		//VectorsUp(SCR_W*3/4,SCR_H/4,  SCR_W/4,SCR_H/4,frame);

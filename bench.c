@@ -144,23 +144,28 @@ static void bench_line(char** log){
 }
 
 static void bench_line_fast(char** log){
+	DRAW_CONTEXT dc={
+		.pxb=&vga_fb,
+	};
+
 	void VectorsUp(int16_t x,int16_t y,int16_t w,int16_t h,uint8_t c){
 		int wx=x-w;
 		int wy=y-h;
-		for(;wx<(x+w);++wx)
-			vga_line_fast(&vga_fb,x,y,wx,wy,c++);
+		dc.c=c;
+		for(;wx<(x+w);++wx){
+			vga_line_fast(&dc,x,y,wx,wy);++dc.c;}
 		wx=x+w-1;
 		wy=y-h;
-		for(;wy<(y+h);++wy)
-			vga_line_fast(&vga_fb,x,y,wx,wy,c++);
+		for(;wy<(y+h);++wy){
+			vga_line_fast(&dc,x,y,wx,wy);++dc.c;}
 		wx=x+w-1;
 		wy=y+h-1;
-		for(;wx>=(x-w);--wx)
-			vga_line_fast(&vga_fb,x,y,wx,wy,c++);
+		for(;wx>=(x-w);--wx){
+			vga_line_fast(&dc,x,y,wx,wy);++dc.c;}
 		wx=x-w;
 		wy=y+h-1;
-		for(;wy>=(y-h);--wy)
-			vga_line_fast(&vga_fb,x,y,wx,wy,c++);
+		for(;wy>=(y-h);--wy){
+			vga_line_fast(&dc,x,y,wx,wy);++dc.c;}
 	}
 
 	bench_start(log,"line_fast");
@@ -172,54 +177,66 @@ static void bench_line_fast(char** log){
 }
 
 static void bench_line_h(char** log){
+	DRAW_CONTEXT dc={
+		.pxb=&vga_fb
+	};
+
 	bench_start(log,"line_h");
 	while(1){
-		int8_t c=frame;
+		dc.c=frame;
 		for(int y=0;y<vga_fb.h;++y){
-			vga_line_fast(&vga_fb,0,y,vga_fb.w,y,c++);}
+			vga_line_fast(&dc,0,y,vga_fb.w,y);++dc.c;}
 		if(frame_end()) break;
 	}
 	bench_end(log);
 }
 
 static void bench_line_v(char** log){
+	DRAW_CONTEXT dc={
+		.pxb=&vga_fb
+	};
+
 	bench_start(log,"line_v");
 	while(1){
-		int8_t c=frame;
+		dc.c=frame;
 		for(int x=0;x<vga_fb.w;++x){
-			vga_line_fast(&vga_fb,x,0,x,vga_fb.h,c++);}
+			vga_line_fast(&dc,x,0,x,vga_fb.h);++dc.c;}
 		if(frame_end()) break;
 	}
 	bench_end(log);
 }
 
 static void bench_line_45(char** log){
+	DRAW_CONTEXT dc={
+		.pxb=&vga_fb
+	};
+
 	bench_start(log,"line_45_1");
 	int w=vga_fb.w-1;
 	int h=vga_fb.h-1;
 	while(1){
-		int8_t c=frame;
+		dc.c=frame;
 		for(int i=0;i<=min(w,h);++i){
-			vga_line_fast(&vga_fb,0,h-i,i,h,c++);
-			vga_line_fast(&vga_fb,w,i,w-i,0,c++);
+			vga_line_fast(&dc,0,h-i,i,h);++dc.c;
+			vga_line_fast(&dc,w,i,w-i,0);++dc.c;
 		}
 		for(int i=1;i<=(w-h)/2;++i){
-			vga_line_fast(&vga_fb,i,0,i+h,h,c++);
-			vga_line_fast(&vga_fb,w-i,h,w-i-h,0,c++);
+			vga_line_fast(&dc,i,0,i+h,h);++dc.c;
+			vga_line_fast(&dc,w-i,h,w-i-h,0);++dc.c;
 		}
 		if(frame_end()) break;
 	}
 	bench_end(log);
 	bench_start(log,"line_45_2");
 	while(1){
-		int8_t c=frame;
+		dc.c=frame;
 		for(int i=0;i<=min(w,h);++i){
-			vga_line_fast(&vga_fb,0,i,i,0,c++);
-			vga_line_fast(&vga_fb,w,h-i,w-i,h,c++);
+			vga_line_fast(&dc,0,i,i,0);++dc.c;
+			vga_line_fast(&dc,w,h-i,w-i,h);++dc.c;
 		}
 		for(int i=1;i<=(w-h)/2;++i){
-			vga_line_fast(&vga_fb,i,h,i+h,0,c++);
-			vga_line_fast(&vga_fb,w-i,0,w-i-h,h,c++);
+			vga_line_fast(&dc,i,h,i+h,0);++dc.c;
+			vga_line_fast(&dc,w-i,0,w-i-h,h);++dc.c;
 		}
 		if(frame_end()) break;
 	}

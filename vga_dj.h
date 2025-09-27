@@ -20,6 +20,11 @@ typedef struct{
 	const int16_t w,h;
 } VGA_PXBUF;
 
+typedef struct{
+	VGA_PXBUF* pxb;
+	uint8_t c;
+} DRAW_CONTEXT;
+
 static VGA_PXBUF vga_fb={
 	.px=NULL,
 	.w=SCR_W,
@@ -86,7 +91,7 @@ SHL void vga_pal_restore(uint8_t* pal){
 	}
 }
 
-SHL void vga_cls(VGA_PXBUF* pb,uint16_t c){
+SHL void vga_cls(VGA_PXBUF* pb,uint8_t c){
 		memset(pb->px,c,pb->w*pb->h);
 }
 
@@ -237,66 +242,52 @@ SHL void vga_line(
 }
 
 SHL void vga_line_fast(
-	const VGA_PXBUF* pb,
-	int16_t x1,
-	int16_t y1,
-	int16_t x2,
-	int16_t y2,
-	const uint8_t c)
+	const DRAW_CONTEXT* dc,
+	int x1,
+	int y1,
+	int x2,
+	int y2)
 {
 	if(y1>y2){
-		int16_t tx=x1;
-		int16_t ty=y1;
+		int tx=x1;
+		int ty=y1;
 		x1=x2;
 		y1=y2;
 		x2=tx;
 		y2=ty;
 	}
-	uint8_t* px=(uint8_t*)vga_plot_getptr(pb->px,x1,y1);
+	uint8_t* px=(uint8_t*)vga_plot_getptr(dc->pxb->px,x1,y1);
 	int xadv;
 
-	void drawh(int runlength){
-		for(int i=0;i<runlength;++i){
-			*px=c;
-			px+=xadv;
-		}
-		px+=pb->w;
-	}
-
-	void drawv(int runlength){
-		for(int i=0;i<runlength;++i){
-			*px=c;
-			px+=pb->w;
-		}
-		px+=xadv;
-	}
-
-	int16_t xd;
+	int xd;
 	if((xd=x2-x1)<0){
 		xadv=-1;
 		xd=-xd;
 	}else{
 		xadv=1;
 	}
-	int16_t yd=y2-y1;
+	int yd=y2-y1;
 	if(yd==0){ // horizontal line
-		for(int16_t i=0;i<=xd;++i){
+		int c=dc->c;
+		for(int i=0;i<=xd;++i){
 			*px=c;
 			px+=xadv;
 		}
 		return;
 	}
 	if(xd==0){ // vertical line
-		for(int16_t i=0;i<=yd;++i){
+		int c=dc->c;
+		for(int i=0;i<=yd;++i){
 			*px=c;
-			px+=pb->w;
+			px+=dc->pxb->w;
 		}
 		return;
 	}
 	if(xd==yd){ // diagonal line
-		for(int16_t i=0;i<=xd;++i){
+		int c=dc->c;
+		for(int i=0;i<=xd;++i){
 			*px=c;
-			px+=xadv+pb->w;
+			px+=xadv+dc->pxb->w;
 		}
 		return;
 	}
@@ -312,6 +303,16 @@ SHL void vga_line_fast(
 		}else{
 			error+=yd;
 		}
+
+		int c=dc->c;
+		void drawh(int runlength){
+			for(int i=0;i<runlength;++i){
+				*px=c;
+				px+=xadv;
+			}
+			px+=dc->pxb->w;
+		}
+
 		drawh(initialpixelcount);
 		for(int i=0;i<(yd-1);++i){
 			int runlength=wholestep;
@@ -334,6 +335,16 @@ SHL void vga_line_fast(
 		}else{
 			error+=xd;
 		}
+
+		int c=dc->c;
+		void drawv(int runlength){
+			for(int i=0;i<runlength;++i){
+				*px=c;
+				px+=dc->pxb->w;
+			}
+			px+=xadv;
+		}
+
 		drawv(initialpixelcount);
 		for(int i=0;i<(xd-1);++i){
 			int runlength=wholestep;
