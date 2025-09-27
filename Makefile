@@ -33,3 +33,6 @@ demo.exe: demo.c vga_dj.h fixedpoint.h timer.h segiconcolor.h
 	#$(PREFIX)objdump -drwC -Mintel $(<:.c=.o) >$(<:.c=.s)
 	@du -b $@
 	@upx --best $@
+
+install: $(TARGETS)
+	cp -p $^ ~/Emulation/DOS/C/code/
