@@ -221,11 +221,11 @@ static void roto(void){
 	}
 	screen_start();
 	while(!key_hit()){
-		float t=frame/64.0;
+		float t=timer_elapsed_fsec();
 		double sin_t;
 		double cos_t;
-		sincos(t,&sin_t,&cos_t);
-		float scale=t*t*0.1;
+		sincos(t*0.375,&sin_t,&cos_t);
+		float scale=t*t*0.0375;
 		fp_t fsin_t=float_to_fp(sin_t*scale);
 		fp_t fcos_t=float_to_fp(cos_t*scale);
 		fp_t xo=float_to_fp(-SCR_W/2+sin_t*SCR_W/2);
@@ -289,11 +289,11 @@ static void roto_pb(void){
 	load_pal_seg();
 	screen_start();
 	while(!key_hit()){
-		float t=frame/64.0;
+		float t=timer_elapsed_fsec();
 		double sin_t;
 		double cos_t;
-		sincos(t,&sin_t,&cos_t);
-		float scale=-t*0.1;
+		sincos(t*0.25,&sin_t,&cos_t);
+		float scale=-t*0.025;
 		fp_t fsin_t=float_to_fp(sin_t*scale);
 		fp_t fcos_t=float_to_fp(cos_t*scale);
 		fp_t xo=float_to_fp(-SCR_W/2+sin_t*SCR_W/2);
@@ -365,10 +365,11 @@ static void tunnel(void){
 
 	screen_start();
 	while(!key_hit()){
+		int tt=timer_elapsed()/(UCLOCKS_PER_SEC/70);
 		//float t=frame/256.0;
 		//int8_t cx=cos(t)*256.0;
-		int cx=frame;
-		int cy=frame;
+		int cx=tt;
+		int cy=tt;
 		for(int y=0;y<SCR_H;++y){
 #if 0
 			for(int x=0;x<SCR_W;++x){
@@ -413,8 +414,9 @@ static void plane(void){
 	//vga_pal_set(1,-1,-1,-1);
 	screen_start();
 	while(!key_hit()){
-		fp_t t=fp_div(int_to_fp(frame),int_to_fp(2));
-		fp_t cx=float_to_fp(cos(frame/128.0)*96.0);
+		int tt=timer_elapsed()/(UCLOCKS_PER_SEC/36);
+		fp_t t=fp_div(int_to_fp(tt),int_to_fp(2));
+		fp_t cx=float_to_fp(cos(tt/128.0)*96.0);
 		fp_t cy=t+t;
 		for(int y=0;y<SCR_H;++y){
 			int y1=y-SCR_H/2;
@@ -461,8 +463,9 @@ static void plane_pb(void){
 	//vga_pal_set(1,-1,-1,-1);
 	screen_start();
 	while(!key_hit()){
-		fp_t t=fp_div(int_to_fp(frame),int_to_fp(2));
-		fp_t cx=float_to_fp(cos(frame/128.0)*96.0);
+		int tt=timer_elapsed()/(UCLOCKS_PER_SEC/36);
+		fp_t t=fp_div(int_to_fp(tt),int_to_fp(2));
+		fp_t cx=float_to_fp(cos(tt/128.0)*96.0);
 		fp_t cy=-(t+t);
 		for(int y=0;y<SCR_H;++y){
 			int y1=y-SCR_H/2;
@@ -662,12 +665,12 @@ static void do_demo(void){
 	//gray();
 	//galaxy();
 
-	plasma1(); return;
-
 	lines();
 
 	derp();
-	plasma();
+	//plasma();
+	plasma1(); //return;
+
 	shadebobs();
 	rainbow1();
 	roto();
