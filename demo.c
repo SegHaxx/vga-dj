@@ -340,17 +340,17 @@ static void roto_pb(void){
 }
 
 // 486DX33 32.72fps
-static void tunnel(void){
+static void tunnel(int scale){
 	uint8_t tun[2][SCR_W][SCR_H];
 	for(int y=0;y<SCR_H;++y){
 		for(int x=0;x<SCR_W;++x){
 			double x2=x-SCR_W/2;
 			double y2=y-SCR_H/2;
 			y2*=1.2; // aspect ratio correction
-			fp_t u=float_to_fp(256.0/(M_PI*2.0)*(atan2(y2,x2)+M_PI));
+			fp_t u=float_to_fp((128.0/M_PI)*(atan2(y2,x2)+M_PI));
 			fp_t v=float_to_fp(4096.0/sqrt(x2*x2+y2*y2));
-			tun[0][x][y]=fp_to_int(u);
-			tun[1][x][y]=fp_to_int(v);
+			tun[0][x][y]=fp_to_int(u<<scale);
+			tun[1][x][y]=fp_to_int(v<<scale);
 		}
 	}
 
@@ -649,6 +649,11 @@ static void plasma(void){
 
 static void do_demo(void){
 	rainbow(256);
+	tunnel(0);
+	tunnel(1);
+	tunnel(2);
+	tunnel(3);
+	return;
 	//gray();
 	//galaxy();
 
@@ -663,7 +668,6 @@ static void do_demo(void){
 	roto_pb();
 	plane();
 	plane_pb();
-	tunnel();
 	//dist();
 }
 
