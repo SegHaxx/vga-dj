@@ -543,29 +543,44 @@ static float osc_sin(float freq){
 	return sin(M_PI_2*freq);
 }
 
-static void plasma1(void){
+static void plasma1(int mode){
 	rainbow(256);
 	screen_start();
 	while(!key_hit()){
 		float t=timer_elapsed_fsec();
 		double sin_t;
 		double cos_t;
-		sincos(M_PI_2*t*0.5,&sin_t,&cos_t);
-		fp_t dx=float_to_fp(sin_t*t*0.1);
-		fp_t dy=float_to_fp(cos_t*t*0.1);
+		fp_t dx,dy;
+		if(mode){
+			sincos(M_PI_2*t*0.5,&sin_t,&cos_t);
+			dx=float_to_fp(sin_t*t*0.1);
+			dy=float_to_fp(cos_t*t*0.1);
+		}else{
+			sincos(M_PI_2*t*0.1,&sin_t,&cos_t);
+			dx=float_to_fp(sin_t*2.0);
+			dy=float_to_fp(2.0);
+		}
 		fp_t y=-fp_mul(dy,int_to_fp(vga_fb.h))>>1;
 		for(int py=0;py<vga_fb.h;++py){
 			fp_t x=float_to_fp(-0.5*fp_to_float(dx)*vga_fb.w);
 			float tt=t*t;
-			float freq=osc_sin(t*0.0666);
-			float amp=1.0/(1.0+freq*0.5);
-			freq+=0.0001;
-			freq*=0.25;
-			amp*=24.0;
-			amp*=fp_to_float(dx);
-			//freq*=fp_to_float(dy);
-			x+=float_to_fp(amp*osc_sin(t+(((float)py-(vga_fb.h*0.5))*freq)));
-			fp_t yy=sin8(fp_to_int(y))+frame*2;
+			float freq,amp;
+			if(mode){
+				float freq=osc_sin(t*0.0666);
+				amp=1.0/(1.0+freq*0.5);
+				freq+=0.0001;
+				freq*=0.25;
+				amp*=24.0;
+				amp*=fp_to_float(dx);
+				//freq*=fp_to_float(dy);
+				x+=float_to_fp(amp*osc_sin(t+(((float)py-(vga_fb.h*0.5))*freq)));				
+			}else{
+				freq=0.075;
+				amp=256.0;
+				x+=float_to_fp(amp*osc_sin((t*2.0)+(((float)py-(vga_fb.h*0.5))*freq)));
+			}
+			fp_t yy=sin8(fp_to_int(y));
+			yy+=t*(1.0/70.0);
 #if 0
 			for(int px=0;px<vga_fb.w;++px){
 				int16_t c=sin8(fp_to_int(x))+yy;
@@ -649,19 +664,16 @@ static void plasma(void){
 
 static void do_demo(void){
 	rainbow(256);
-	tunnel(0);
-	tunnel(1);
-	tunnel(2);
-	tunnel(3);
-	return;
 	//gray();
 	//galaxy();
 
-	lines();
+	//lines();
 
-	derp();
+	//derp();
 	//plasma();
-	plasma1(); //return;
+	plasma1(1);
+	plasma1(0);
+	return;
 
 	shadebobs();
 	roto();
