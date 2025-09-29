@@ -356,19 +356,25 @@ static void tunnel(int scale){
 
 	rainbow(256);
 
+	uint8_t tex_fetch(uint8_t u,uint8_t v){
+		//return sin8(u)+sin8(v);
+		return u+v;
+		//return u^v;
+	}
+
 	screen_start();
 	while(!key_hit()){
-		int tt=timer_elapsed()/(UCLOCKS_PER_SEC/70);
-		//float t=frame/256.0;
-		//int8_t cx=cos(t)*256.0;
-		int cx=tt;
-		int cy=tt;
+		uint8_t cx=frame;
+		uint8_t cy=frame;
+		//float t=timer_elapsed_fsec();
+		//cx=cos(t/3.66)*256.0;
 		for(int y=0;y<SCR_H;++y){
 #if 0
 			for(int x=0;x<SCR_W;++x){
 				int8_t u=tun[0][x][y]+cx;
 				int8_t v=tun[1][x][y]+cy;
-				vga_plot_unsafe(vga_fb.px,x,y,u^v);
+				vga_plot_unsafe(vga_fb.px,x,y,
+					tex_fetch(u,v));
 			}
 #else
 			for(int x=0;x<SCR_W;x+=4){
@@ -376,16 +382,16 @@ static void tunnel(int scale){
 				uint8_t a,b,c,d;
 				u=tun[0][x][y];
 				v=tun[1][x][y];
-				a=(cx+u)^(v+cy);
+				a=tex_fetch(cx+u,cy+v);
 				u=tun[0][x+1][y];
 				v=tun[1][x+1][y];
-				b=(cx+u)^(v+cy);
+				b=tex_fetch(cx+u,cy+v);
 				u=tun[0][x+2][y];
 				v=tun[1][x+2][y];
-				c=(cx+u)^(v+cy);
+				c=tex_fetch(cx+u,cy+v);
 				u=tun[0][x+3][y];
 				v=tun[1][x+3][y];
-				d=(cx+u)^(v+cy);
+				d=tex_fetch(cx+u,cy+v);
 				uint32_t l=(a)|(b<<8)|(c<<16)|(d<<24);
 				*(uint32_t*)&vga_fb.px[SCR_W*y+x]=l;
 			}
@@ -680,6 +686,10 @@ static void do_demo(void){
 	roto_pb();
 	plane();
 	plane_pb();
+	tunnel(0);
+	tunnel(1);
+	tunnel(2);
+	tunnel(3);
 	//dist();
 }
 
