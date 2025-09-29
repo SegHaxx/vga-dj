@@ -1,4 +1,3 @@
-#include <go32.h>
 #include <bios.h>
 
 #include <stdlib.h>
@@ -558,11 +557,11 @@ static void plasma1(int mode){
 		double cos_t;
 		fp_t dx,dy;
 		if(mode){
-			sincos(M_PI_2*t*0.5,&sin_t,&cos_t);
-			dx=float_to_fp(sin_t*t*0.1);
-			dy=float_to_fp(cos_t*t*0.1);
+			sincos(M_PI_2*t*0.25,&sin_t,&cos_t);
+			dx=float_to_fp(sin_t*powf(osc_sin(t*0.05),3)*4.0);
+			dy=float_to_fp(cos_t*powf(osc_sin(t*0.05),3)*4.0);
 		}else{
-			sincos(M_PI_2*t*0.1,&sin_t,&cos_t);
+			sincos(M_PI_2*t*0.05,&sin_t,&cos_t);
 			dx=float_to_fp(sin_t*2.0);
 			dy=float_to_fp(2.0);
 		}
@@ -574,7 +573,6 @@ static void plasma1(int mode){
 			if(mode){
 				float freq=osc_sin(t*0.0666);
 				amp=1.0/(1.0+freq*0.5);
-				freq+=0.0001;
 				freq*=0.25;
 				amp*=24.0;
 				amp*=fp_to_float(dx);
@@ -586,7 +584,7 @@ static void plasma1(int mode){
 				x+=float_to_fp(amp*osc_sin((t*2.0)+(((float)py-(vga_fb.h*0.5))*freq)));
 			}
 			fp_t yy=sin8(fp_to_int(y));
-			yy+=t*(1.0/70.0);
+			yy+=frame<<1;
 #if 0
 			for(int px=0;px<vga_fb.w;++px){
 				int16_t c=sin8(fp_to_int(x))+yy;
@@ -675,11 +673,11 @@ static void do_demo(void){
 
 	//lines();
 
-	//derp();
+	derp();
 	//plasma();
 	plasma1(1);
 	plasma1(0);
-	return;
+	//return;
 
 	shadebobs();
 	roto();
